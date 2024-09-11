@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AStar Algorithm Pathfinding</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        .control-panel {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div class="control-panel">
+    <label for="start-point">Start Point (Lat, Lng):</label>
+    <input type="text" id="start-point" placeholder="e.g. 51.505, -0.09">
+    <br>
+    <label for="end-point">End Point (Lat, Lng):</label>
+    <input type="text" id="end-point" placeholder="e.g. 51.505, -0.09">
+    <br>
+    <button id="draw-grid" disabled>Draw Grid</button>
+    <button id="calculate-path" disabled>Calculate Path</button>
+    <button id="clear-markers">Clear</button>
+    <br><br>
+    <label for="restricted-areas">Restricted Areas (Lat, Lng):</label>
+    <textarea id="restricted-areas" readonly></textarea>
+    <br><br>
+    <div>
+    <label for="final-path">Final Path:</label>
+    <textarea id="final-path" rows="5" cols="50" readonly></textarea>
+    </div>
+</div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="pathfinding.js"></script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCIuP0klfOIqnmHuNZQT27_5Kcks-yeLxc",
+    authDomain: "pathbuilderalgorithm.firebaseapp.com",
+    databaseURL: "https://pathbuilderalgorithm-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "pathbuilderalgorithm",
+    storageBucket: "pathbuilderalgorithm.appspot.com",
+    messagingSenderId: "239656938683",
+    appId: "1:239656938683:web:e512c3afdff5cce1058d9e"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+</body>
+</html>
