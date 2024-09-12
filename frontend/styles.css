@@ -1,0 +1,166 @@
+/* Basic Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f7f9fc;
+    color: #333;
+}
+
+/* Map styling */
+#map {
+    height: 600px;
+    width: 100%;
+    border: 2px solid #ddd;
+    margin-top: 20px;
+    border-radius: 8px;
+}
+
+/* Flexbox for Control Panels */
+.control-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+/* Points Panel (Left side) */
+.points-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    max-width: 300px;
+}
+
+/* Central panel for Restricted Areas */
+.restricted-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+    flex-grow: 1;
+    align-items: center;
+}
+
+/* Right Panel (Search) */
+.search-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+/* Buttons below Start and End Points */
+.buttons-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Adjust the width of Start, End, and Restricted Areas input fields */
+input#start-point,
+input#end-point,
+textarea#restricted-areas {
+    width: 100%;
+    max-width: 250px;
+}
+
+/* Fixed size for Restricted Areas textarea */
+textarea#restricted-areas {
+    height: 100px;
+    overflow-y: scroll;
+}
+
+/* Add spacing between label and input/textarea */
+input[type="text"],
+textarea {
+    margin-top: 5px; /* Space between label and input/textarea */
+}
+
+/* Styling for Inputs and Labels */
+label {
+    font-size: 14px;
+    font-weight: bold;
+    display: block;
+}
+
+input[type="text"] {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+textarea {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    resize: none; /* Disable manual resizing */
+}
+
+/* Modern Button Styles */
+button {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
+}
+
+/* Flexbox Layout for Form Controls */
+.form-control {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-control {
+    margin-bottom: 10px;
+}
+
+.grid-size-control label {
+    display: block;  /* Makes the main label block to keep it above the options */
+}
+
+.radio-buttons {
+    display: flex;       /* Aligns children (radio buttons and labels) in a row */
+    align-items: center; /* Centers items vertically */
+    gap: 10px;           /* Adds space between each item */
+}
+
+.radio-buttons label {
+    margin: 0;  /* Removes default margin to keep text aligned with its input */
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .control-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .right-panel, .points-panel, .restricted-panel {
+        max-width: 100%;
+    }
+
+    input#start-point, input#end-point, textarea#restricted-areas {
+        width: 100%; /* Full width on smaller screens */
+    }
+}

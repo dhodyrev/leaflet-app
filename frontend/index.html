@@ -5,63 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AStar Algorithm Pathfinding</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        #map {
-            height: 600px;
-            width: 100%;
-        }
-        .control-panel {
-            margin: 20px 0;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div id="map"></div>
+
 <div class="control-panel">
-    <label for="start-point">Start Point (Lat, Lng):</label>
-    <input type="text" id="start-point" placeholder="e.g. 51.505, -0.09">
-    <br>
-    <label for="end-point">End Point (Lat, Lng):</label>
-    <input type="text" id="end-point" placeholder="e.g. 51.505, -0.09">
-    <br>
-    <button id="draw-grid" disabled>Draw Grid</button>
-    <button id="calculate-path" disabled>Calculate Path</button>
-    <button id="clear-markers">Clear</button>
-    <br><br>
-    <label for="restricted-areas">Restricted Areas (Lat, Lng):</label>
-    <textarea id="restricted-areas" readonly></textarea>
-    <br><br>
-    <div>
-    <label for="final-path">Final Path:</label>
-    <textarea id="final-path" rows="5" cols="50" readonly></textarea>
+    <!-- Left side: Start and End points with buttons -->
+    <div class="points-panel">
+        <div class="form-control">
+            <label for="start-point">Start Point (Lat, Lng):</label>
+            <input type="text" id="start-point" placeholder="e.g. 51.505, -0.09">
+        </div>
+        <div class="form-control">
+            <label for="end-point">End Point (Lat, Lng):</label>
+            <input type="text" id="end-point" placeholder="e.g. 51.505, -0.09">
+        </div>
+        <div class="form-control grid-size-control">
+            <label>Grid Cell Size:</label>
+            <div class="radio-buttons">
+                <input type="radio" id="gridSize1" name="gridSize" value="1" checked>
+                <label for="gridSize1">1 km</label>
+                <input type="radio" id="gridSize5" name="gridSize" value="5">
+                <label for="gridSize5">5 km</label>
+                <input type="radio" id="gridSize10" name="gridSize" value="10">
+                <label for="gridSize10">10 km</label>
+            </div>
+        </div>
+        <div class="buttons-container">
+            <button id="draw-grid" disabled>Draw Grid</button>
+            <button id="calculate-path" disabled>Calculate Path</button>
+            <button id="clear-markers">Clear</button>
+        </div>
+    </div>
+
+    <!-- Central panel: Restricted Areas -->
+    <div class="restricted-panel">
+        <div class="form-control">
+            <label for="restricted-areas">Restricted Areas (Lat, Lng):</label>
+            <textarea id="restricted-areas" readonly></textarea>
+        </div>
+        <input type="text" id="restricted-area-input" placeholder="Enter coordinates as lat,lng; lat,lng; ...">
+        <button onclick="uploadRestrictedAreas()">Upload Restricted Areas</button>
+    </div>
+
+    <!-- Central panel: Restricted Areas -->
+    <div class="final-path-panel">
+        <div class="form-control">
+            <label for="final-path">Final Path:</label>
+            <textarea id="final-path" rows="5" cols="50" readonly></textarea>
+        </div>
+    </div>
+
+    <!-- Right side: Search panel -->
+    <div class="search-panel">
+        <div class="form-control">
+            <label for="search-coordinates">Search Coordinates (Lat, Lng):</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="search-coordinates" placeholder="e.g. 51.505, -0.09">
+                <button id="search-button">Search</button>
+                <button id="remove-pin-button" disabled>Remove Pin</button>
+            </div>
+        </div>
     </div>
 </div>
+
+<div id="map"></div>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="pathfinding.js"></script>
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCIuP0klfOIqnmHuNZQT27_5Kcks-yeLxc",
-    authDomain: "pathbuilderalgorithm.firebaseapp.com",
-    databaseURL: "https://pathbuilderalgorithm-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "pathbuilderalgorithm",
-    storageBucket: "pathbuilderalgorithm.appspot.com",
-    messagingSenderId: "239656938683",
-    appId: "1:239656938683:web:e512c3afdff5cce1058d9e"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
 </body>
 </html>
