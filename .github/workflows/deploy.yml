@@ -38,7 +38,7 @@ jobs:
 
       - name: Configure gsutil to use service account
         run: |
-          echo ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }} > $HOME/gcp-key.json
+          printf "%s" "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > $HOME/gcp-key.json
           gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
 
       - name: Deploy to GCS
