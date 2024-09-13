@@ -7,7 +7,7 @@ provider "google" {
 
 resource "google_storage_bucket" "static_website" {
   name                        = "leaflet-site"
-  location                    = "Europe"
+  location                    = "EU"
   force_destroy               = true
   website {
     main_page_suffix = "index.html"
