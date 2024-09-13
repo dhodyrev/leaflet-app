@@ -44,6 +44,26 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 
 var startPoint, endPoint, gridLayer, restrictedAreas = [], startPointMarker, endPointMarker;
 var calculatedPath, edgesLayer;
 var lastPinMarker = null;  // Keep track of the last added pin
+var KM_IN_DEGREE_LAT;
+var KM_IN_DEGREE_LNG;
+
+// Global variables for grid and steps
+var grid, latStep, lngStep;
+
+// Predefined restricted areas CSV data
+var predefinedRestrictedAreasCSV = `
+54.366316431021865,32.43164062500001,Аеродром Шаталово (Поз. НОЖНИЦЫ)
+53.733902411806795,33.35449218750001,Аеродром Сєща (Поз. КЕДР)
+54.218756623382895,34.39819335937501,Аеродром Шайковка (Поз. РЕЧНОЙ)
+52.662191961154434,39.45190429687501,Аеродром Липецьк 2 (Поз. ВОРСОВКА)
+51.76724540838995,36.28234863281251,Аеродром Халіно (Поз. Восточный)
+51.32665236200265,37.79296875000001,Аеродром Старий Оскол (Поз. ОСКОЛ)
+51.62788862375307,39.13879394531251,Аеродром Вороніж (Поз. БАЛТИМОР)
+51.36100654256105,42.17102050781251,Аеродром Борисоглєбськ (Поз. ОТВЕСНЫЙ)
+51.52805986237131,45.84594726562501,Аеродром Сокол (Поз. Урюк)
+51.480163895200434,46.197509765625,Аеродром Енгельс (Поз. КАРАКУЛЬ)
+54.218756623382895,34.39819335937501,Аеродром Шайковка (Поз. РЕЧНОЙ)
+`;
 
 map.on('click', function(e) {
     const clickedLat = e.latlng.lat;
@@ -72,10 +92,6 @@ map.on('click', function(e) {
         debugLog(`End point selected: ${endPoint.lat}, ${endPoint.lng}`, "INFO");
     }
 });
-
-
-// Global variables for grid and steps
-var grid, latStep, lngStep;
 
 document.getElementById('draw-grid').addEventListener('click', function() {
     drawGridBetweenPoints();
@@ -132,6 +148,10 @@ document.querySelectorAll('input[name="gridSize"]').forEach(radio => {
 
 // Function to update grid size based on selected value
 function updateGridSize(gridSizeKm) {
+    if (!startPoint) {
+        alert("Please select a start point before setting grid size.");
+        return;
+    }
     KM_IN_DEGREE_LAT = gridSizeKm / 111; // Update based on 1 degree latitude ~ 111 km
     KM_IN_DEGREE_LNG = gridSizeKm / (111 * Math.cos(startPoint.lat * Math.PI / 180)); // Adjust longitude based on latitude
     console.log(`Grid cell size set to ${gridSizeKm} km`);
@@ -189,13 +209,13 @@ function drawGridBetweenPoints() {
     // Draw the nodes and their connections
     grid.forEach(node => {
         let nodeColor = '#0078ff';
-        let popupText = `Lat: ${node.lat.toFixed(6)}, Lng: ${node.lng.toFixed(6)}`;
+        let popupText = `${node.lat.toFixed(6)}, ${node.lng.toFixed(6)}`;
 
         if (node.lat.toFixed(6) === startPoint.lat.toFixed(6) && node.lng.toFixed(6) === startPoint.lng.toFixed(6)) {
             nodeColor = '#00ff00';
             popupText = 'Start Point: ' + popupText;
         } else if (node.lat.toFixed(6) === endPoint.lat.toFixed(6) && node.lng.toFixed(6) === endPoint.lng.toFixed(6)) {
-            nodeColor = '#ff0000';
+            nodeColor = '#00ff00';
             popupText = 'End Point: ' + popupText;
         }
 
@@ -230,13 +250,25 @@ function drawGridBetweenPoints() {
 // Function to get neighboring nodes for a given node, including diagonal neighbors
 function getNeighbors(node, latStep, lngStep, grid) {
     let potentialNeighbors = [
-        // Direct neighbors
         { lat: node.lat + latStep, lng: node.lng },      // North
         { lat: node.lat - latStep, lng: node.lng },      // South
         { lat: node.lat, lng: node.lng + lngStep },      // East
-        { lat: node.lat, lng: node.lng - lngStep },      // West
+        { lat: node.lat, lng: node.lng - lngStep }       // West
+    ];
 
-        // Diagonal neighbors
+    return filterValidNeighbors(potentialNeighbors, grid);
+}
+
+function filterValidNeighbors(neighbors, grid) {
+    return neighbors.filter(neighbor => {
+        // Check if any adjacent nodes are restricted
+        const isRestricted = restrictedAreas.includes(getNodeKey(neighbor.lat, neighbor.lng));
+        return !isRestricted && grid.some(n => n.lat.toFixed(6) === neighbor.lat.toFixed(6) && n.lng.toFixed(6) === neighbor.lng.toFixed(6));
+    });
+}
+
+function getDiagonalNeighbors(node, latStep, lngStep, grid) {
+    let potentialDiagonalNeighbors = [
         { lat: node.lat + latStep, lng: node.lng + lngStep },  // Northeast
         { lat: node.lat + latStep, lng: node.lng - lngStep },  // Northwest
         { lat: node.lat - latStep, lng: node.lng + lngStep },  // Southeast
@@ -245,142 +277,111 @@ function getNeighbors(node, latStep, lngStep, grid) {
 
     // Ensure the grid is available and is an array
     if (!Array.isArray(grid)) {
-        console.error("Invalid or undefined grid provided to getNeighbors.");
-        return [];
-    }
-
-    // Use .toFixed(6) to check neighbors to account for floating-point inaccuracies
-    return potentialNeighbors.filter(neighbor =>
-        grid.some(n => n.lat.toFixed(6) === neighbor.lat.toFixed(6) && n.lng.toFixed(6) === neighbor.lng.toFixed(6))
-    );
-}
-
-function drawEdges(grid, latStep, lngStep) {
-    grid.forEach(node => {
-        const neighbors = getNeighbors(node, latStep, lngStep, grid);
-
-        neighbors.forEach(neighbor => {
-            if (grid.some(n => n.lat.toFixed(6) === neighbor.lat.toFixed(6) && n.lng.toFixed(6) === neighbor.lng.toFixed(6))) {
-                L.polyline([[node.lat, node.lng], [neighbor.lat, neighbor.lng]], {
-                    color: '#808080',
-                    weight: 1
-                }).addTo(edgesLayer);
-            } else {
-                // Log missing neighbors for debugging
-                console.log(`Missing neighbor: ${neighbor.lat.toFixed(6)}, ${neighbor.lng.toFixed(6)} for node ${node.lat.toFixed(6)}, ${node.lng.toFixed(6)}`);
-            }
-        });
-
-        // Add diagonal edges
-        const diagonalNeighbors = getDiagonalNeighbors(node, latStep, lngStep, grid);
-        diagonalNeighbors.forEach(neighbor => {
-            if (grid.some(n => n.lat.toFixed(6) === neighbor.lat.toFixed(6) && n.lng.toFixed(6) === neighbor.lng.toFixed(6))) {
-                L.polyline([[node.lat, node.lng], [neighbor.lat, neighbor.lng]], {
-                    color: '#808080',
-                    weight: 1
-                }).addTo(edgesLayer);
-            } else {
-                // Log missing diagonal neighbors for debugging
-                console.log(`Missing diagonal neighbor: ${neighbor.lat.toFixed(6)}, ${neighbor.lng.toFixed(6)} for node ${node.lat.toFixed(6)}, ${node.lng.toFixed(6)}`);
-            }
-        });
-    });
-}
-
-function getDiagonalNeighbors(node, latStep, lngStep, grid) {
-    let potentialDiagonalNeighbors = [
-        { lat: node.lat + latStep, lng: node.lng + lngStep },  // Bottom-right
-        { lat: node.lat + latStep, lng: node.lng - lngStep },  // Bottom-left
-        { lat: node.lat - latStep, lng: node.lng + lngStep },  // Top-right
-        { lat: node.lat - latStep, lng: node.lng - lngStep }   // Top-left
-    ];
-
-    // Ensure the grid is available and is an array
-    if (!Array.isArray(grid)) {
         console.error("Invalid or undefined grid provided to getDiagonalNeighbors.");
         return [];
     }
 
-    // Use .toFixed(6) to check diagonal neighbors
-    return potentialDiagonalNeighbors.filter(neighbor =>
-        grid.some(n => n.lat.toFixed(6) === neighbor.lat.toFixed(6) && n.lng.toFixed(6) === neighbor.lng.toFixed(6))
-    );
+    // Filter out diagonals that are adjacent to restricted nodes
+    return potentialDiagonalNeighbors.filter(diagonal => {
+        // Generate keys for adjacent nodes
+        const verticalKey = getNodeKey(node.lat, diagonal.lng);
+        const horizontalKey = getNodeKey(diagonal.lat, node.lng);
+
+        // Check if moving in diagonal crosses a restricted node
+        const verticalBlocked = restrictedAreas.includes(verticalKey);
+        const horizontalBlocked = restrictedAreas.includes(horizontalKey);
+
+        // Return true if neither adjacent nodes are restricted
+        return !(verticalBlocked || horizontalBlocked);
+    });
 }
 
-function toggleRestrictedArea(marker, node, latStep, lngStep, grid) {
+function drawEdges(grid, latStep, lngStep) {
+    if (edgesLayer) {
+        map.removeLayer(edgesLayer);
+        edgesLayer = L.layerGroup();
+    }
+
+    grid.forEach(node => {
+        const nodeKey = getNodeKey(node.lat, node.lng);
+        if (!restrictedAreas.includes(nodeKey)) {
+            // Get potential direct and diagonal neighbors
+            const neighbors = getNeighbors(node, latStep, lngStep, grid);
+            const diagonalNeighbors = getDiagonalNeighbors(node, latStep, lngStep, grid);
+
+            // Draw edges to direct neighbors
+            neighbors.forEach(neighbor => {
+                const neighborKey = getNodeKey(neighbor.lat, neighbor.lng);
+                if (!restrictedAreas.includes(neighborKey)) {
+                    L.polyline([[node.lat, node.lng], [neighbor.lat, neighbor.lng]], {
+                        color: '#808080',
+                        weight: 1
+                    }).addTo(edgesLayer);
+                }
+            });
+
+            // Draw edges to diagonal neighbors
+            diagonalNeighbors.forEach(neighbor => {
+                const neighborKey = getNodeKey(neighbor.lat, neighbor.lng);
+                if (!restrictedAreas.includes(neighborKey)) {
+                    L.polyline([[node.lat, node.lng], [neighbor.lat, neighbor.lng]], {
+                        color: '#808080',
+                        weight: 1
+                    }).addTo(edgesLayer);
+                }
+            });
+        }
+    });
+
+    edgesLayer.addTo(map);
+}
+
+
+
+function toggleRestrictedArea(marker, node) {
     const nodeKey = getNodeKey(node.lat, node.lng);
+    const startPointKey = getNodeKey(startPoint.lat, startPoint.lng);
+    const endPointKey = getNodeKey(endPoint.lat, endPoint.lng);
+
+    // Check if the node is the start or end point
+    if (nodeKey === startPointKey || nodeKey === endPointKey) {
+        alert("Start and End points cannot be marked as restricted.");
+        return; // Do not allow restriction toggling for start/end points
+    }
 
     if (!restrictedAreas.includes(nodeKey)) {
         // Add the node to the restricted areas and change its color to red
         restrictedAreas.push(nodeKey);
-
-        // Remove the existing marker and replace it with a red one
-        map.removeLayer(marker);
-
-        let newMarker = L.marker([node.lat, node.lng], {
-            icon: L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style='background-color: red; width: 10px; height: 10px; border-radius: 50%;'></div>`,
-                iconSize: [10, 10],
-                iconAnchor: [5, 5]
-            })
-        }).addTo(gridLayer).bindPopup(`Restricted Area: Lat: ${node.lat.toFixed(6)}, Lng: ${node.lng.toFixed(6)}`);
-
-        // Add the event listener for toggling again
-        newMarker.on('click', function () {
-            toggleRestrictedArea(newMarker, node, latStep, lngStep, grid);
-        });
-
-        // Update restricted areas list and edges
-        updateRestrictedAreasList();
-
-        // Add red edges to its neighbors that are not restricted
-        let neighbors = getNeighbors(node, latStep, lngStep, grid);
-        neighbors.forEach(neighbor => {
-            const neighborKey = getNodeKey(neighbor.lat, neighbor.lng);
-            if (!restrictedAreas.includes(neighborKey)) {
-                L.polyline([[node.lat, node.lng], [neighbor.lat, neighbor.lng]], {
-                    color: 'red',
-                    weight: 1
-                }).addTo(edgesLayer);
-            }
-        });
-
+        updateMarkerAndRebindClick(marker, node, 'red');
         debugLog(`Added restricted area: ${nodeKey}`, "INFO");
     } else {
         // Remove the node from the restricted areas and reset its color to blue
         restrictedAreas = restrictedAreas.filter(area => area !== nodeKey);
-
-        // Remove the existing marker and replace it with a blue one
-        map.removeLayer(marker);
-
-        let newMarker = L.marker([node.lat, node.lng], {
-            icon: L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style='background-color: #0078ff; width: 10px; height: 10px; border-radius: 50%;'></div>`,
-                iconSize: [10, 10],
-                iconAnchor: [5, 5]
-            })
-        }).addTo(gridLayer).bindPopup(`Lat: ${node.lat.toFixed(6)}, Lng: ${node.lng.toFixed(6)}`);
-
-        // Add the event listener for toggling again
-        newMarker.on('click', function () {
-            toggleRestrictedArea(newMarker, node, latStep, lngStep, grid);
-        });
-
-        // Update restricted areas list and redraw edges
-        updateRestrictedAreasList();
-        drawEdges(grid, latStep, lngStep);
+        updateMarkerAndRebindClick(marker, node, '#0078ff');
         debugLog(`Removed restricted area: ${nodeKey}`, "INFO");
     }
+
+    // Redraw edges considering new restrictions
+    drawEdges(grid, latStep, lngStep);
+    // Update restricted areas list
+    updateRestrictedAreasList();
 }
 
-function updateRestrictedAreasList() {
-    const restrictedAreaText = document.getElementById('restricted-areas');
-    restrictedAreaText.value = restrictedAreas.map(area => {
-        const [lat, lng] = area.split(',');
-        return `${lat}, ${lng}`;
-    }).join('\n');
+function updateMarkerAndRebindClick(marker, node, color) {
+    map.removeLayer(marker);
+    let newMarker = L.marker([node.lat, node.lng], {
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style='background-color: ${color}; width: 10px; height: 10px; border-radius: 50%;'></div>`,
+            iconSize: [10, 10],
+            iconAnchor: [5, 5]
+        })
+    }).addTo(gridLayer).bindPopup(`${node.lat.toFixed(6)}, ${node.lng.toFixed(6)}`);
+
+    // Add the event listener for toggling again
+    newMarker.on('click', function () {
+        toggleRestrictedArea(newMarker, node);
+    });
 }
 
 // Build the graph with logging of neighbors
@@ -594,30 +595,41 @@ function distance(node1, node2) {
 function createGrid(start, end) {
     let grid = [];
 
-    // Calculate distance between the start and end points in latitude and longitude
-    let latDistance = end.lat - start.lat;
-    let lngDistance = end.lng - start.lng;
+    // Desired grid cell size in kilometers (you can get this from user input or set a default value)
+    const gridSizeKm = parseFloat(document.querySelector('input[name="gridSize"]:checked').value) || 1;
 
-    // Calculate the number of divisions based on the chosen grid cell size (updated KM_IN_DEGREE_LAT/LNG)
-    let latDivisions = Math.ceil(Math.abs(latDistance) / KM_IN_DEGREE_LAT);
-    let lngDivisions = Math.ceil(Math.abs(lngDistance) / KM_IN_DEGREE_LNG);
+    // Calculate average latitude to adjust longitude degrees per km
+    const avgLat = (start.lat + end.lat) / 2;
 
-    // Calculate the latitude and longitude step size based on the chosen grid scale
-    let latStep = latDistance / latDivisions;
-    let lngStep = lngDistance / lngDivisions;
+    // Degrees per kilometer for latitude and longitude
+    const degreesPerKmLat = 1 / 111; // 1 degree latitude is approximately 111 km
+    const degreesPerKmLng = 1 / (111 * Math.cos(avgLat * Math.PI / 180)); // Adjust for latitude
+
+    // Calculate step sizes in degrees
+    const latStep = degreesPerKmLat * gridSizeKm;
+    const lngStep = degreesPerKmLng * gridSizeKm;
+
+    // Calculate the number of divisions between the start and end points
+    const latDistance = end.lat - start.lat;
+    const lngDistance = end.lng - start.lng;
+
+    const latDivisions = Math.ceil(Math.abs(latDistance) / latStep);
+    const lngDivisions = Math.ceil(Math.abs(lngDistance) / lngStep);
+
+    // Adjust steps to cover the exact distance
+    const adjustedLatStep = latDistance / latDivisions;
+    const adjustedLngStep = lngDistance / lngDivisions;
 
     // Generate grid nodes
     for (let i = 0; i <= latDivisions; i++) {
         for (let j = 0; j <= lngDivisions; j++) {
-            let nodeLat = start.lat + i * latStep;
-            let nodeLng = start.lng + j * lngStep;
+            let nodeLat = start.lat + i * adjustedLatStep;
+            let nodeLng = start.lng + j * adjustedLngStep;
             grid.push({ lat: nodeLat, lng: nodeLng });
         }
     }
 
-    // Log and return the generated grid and step sizes
-    debugLog(`LatStep: ${latStep}, LngStep: ${lngStep}`, "INFO");
-    return { grid, latStep, lngStep };
+    return { grid, latStep: adjustedLatStep, lngStep: adjustedLngStep };
 }
 
 function clearMarkers() {
@@ -666,6 +678,8 @@ function clearMarkers() {
     document.querySelectorAll('input[name="gridSize"]').forEach(radio => {
         radio.disabled = false;
     });
+
+    document.getElementById('restricted-area-input').value = "";
 
     debugLog('Cleared all markers, grid, paths, restricted areas, and start/end points', "INFO");
 }
@@ -775,7 +789,7 @@ function markAsRestricted(node) {
                 iconSize: [10, 10],
                 iconAnchor: [5, 5]
             })
-        }).addTo(gridLayer).bindPopup(`Restricted Area: Lat: ${node.lat.toFixed(6)}, Lng: ${node.lng.toFixed(6)}`);
+        }).addTo(gridLayer).bindPopup(`Restricted Area: ${node.lat.toFixed(6)}, ${node.lng.toFixed(6)}`);
 
         // Add event listener to toggle restricted area
         newMarker.on('click', function () {
@@ -783,6 +797,9 @@ function markAsRestricted(node) {
         });
 
         updateRestrictedAreasList(); // Update the displayed list of restricted areas
+
+        // Redraw edges considering new restrictions
+        drawEdges(grid, latStep, lngStep);
     }
 }
 
