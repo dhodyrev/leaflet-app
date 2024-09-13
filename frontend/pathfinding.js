@@ -63,7 +63,46 @@ var predefinedRestrictedAreasCSV = `
 51.52805986237131,45.84594726562501,Аеродром Сокол (Поз. Урюк)
 51.480163895200434,46.197509765625,Аеродром Енгельс (Поз. КАРАКУЛЬ)
 54.218756623382895,34.39819335937501,Аеродром Шайковка (Поз. РЕЧНОЙ)
+48.78371150871238,44.384765625,Аеропорт Гумрак
+48.638411,43.794780,Аеродром Маріновка (Поз. ПАМЯТНЫЙ)
+48.56595408227598,44.373779296875,Аеродром Зімнянський (Бєкетовка)
+48.325333257522786,46.1865234375,Аеродром Ахтубінськ
+50.788072239274456,40.58349609375001,Аеродром Бутурлинівка (Поз. ПРИРОДНЫЙ)
+50.69366868391783,36.28234863281251,Аеродром Томаровка
+44.10489079387821,39.09883975831244,Туапсинський НПЗ
+47.83611161324854,39.86214627536628,Новошахтинський НПЗ
+48.492525109116485,44.623161289659784,Волгоградський НПЗ
+53.08833188063941,48.40023290956709,Сизранський НПЗ
+51.46415931837957,45.935411571466126,Саратовський НПЗ
+54.564866842818006,39.74200068743144,Рязанський НПЗ
 `;
+
+
+// Parse the predefined restricted areas
+var predefinedRestrictedAreas = parseCSVData(predefinedRestrictedAreasCSV);
+
+// Set to keep track of predefined restricted area keys
+var predefinedRestrictedAreaKeys = new Set();
+
+var predefinedMarkersLayer = L.layerGroup();
+
+predefinedRestrictedAreas.forEach(area => {
+    let marker = L.marker([area.lat, area.lng], {
+        icon: L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style='background-color: orange; width: 10px; height: 10px; border-radius: 50%;'></div>`,
+            iconSize: [10, 10],
+            iconAnchor: [5, 5]
+        })
+    }).addTo(predefinedMarkersLayer).bindPopup(`Coordinates: ${area.lat.toFixed(6)}, ${area.lng.toFixed(6)}<br>${area.description}`);
+
+    // Clicking on the marker shows the popup
+    marker.on('click', function () {
+        marker.openPopup();
+    });
+});
+
+predefinedMarkersLayer.addTo(map);
 
 map.on('click', function(e) {
     const clickedLat = e.latlng.lat;
@@ -175,6 +214,24 @@ function drawPath(path) {
 
         // Update the text area with the final path
         document.getElementById('final-path').value = path.join(' -> ');
+
+        // Calculate the total length of the path
+        let totalLength = 0;
+        for (let i = 0; i < latLngs.length - 1; i++) {
+            const [lat1, lng1] = latLngs[i];
+            const [lat2, lng2] = latLngs[i + 1];
+            totalLength += haversineDistance(lat1, lng1, lat2, lng2);
+        }
+
+        // Display the total length under the text area
+        if (totalLength >= 1) {
+            // Display in kilometers
+            document.getElementById('total-length').innerText = `Total Path Length: ${totalLength.toFixed(2)} km`;
+        } else {
+            // Display in meters
+            document.getElementById('total-length').innerText = `Total Path Length: ${(totalLength * 1000).toFixed(0)} meters`;
+        }
+
     } else {
         console.error("No path found to draw");
         debugLog("No path found!", "ERROR");
@@ -681,6 +738,9 @@ function clearMarkers() {
 
     document.getElementById('restricted-area-input').value = "";
 
+    // Clear the total length display
+    document.getElementById('total-length').innerText = "";
+
     debugLog('Cleared all markers, grid, paths, restricted areas, and start/end points', "INFO");
 }
 
@@ -810,3 +870,35 @@ function updateRestrictedAreasList() {
         return `${lat}, ${lng}`;
     }).join('\n');
 }
+
+function parseCSVData(csvData) {
+    let lines = csvData.trim().split('\n');
+    let restrictedAreas = [];
+    for (let line of lines) {
+        let [latStr, lngStr, description] = line.split(',');
+        let lat = parseFloat(latStr.trim());
+        let lng = parseFloat(lngStr.trim());
+        description = description ? description.trim() : '';
+        if (!isNaN(lat) && !isNaN(lng)) {
+            restrictedAreas.push({ lat, lng, description });
+        }
+    }
+    return restrictedAreas;
+}
+
+function haversineDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Radius of the Earth in kilometers
+    const toRad = (deg) => deg * (Math.PI / 180);
+
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in kilometers
+}
+

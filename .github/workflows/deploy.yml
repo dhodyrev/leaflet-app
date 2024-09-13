@@ -1,0 +1,50 @@
+name: Deploy to GCS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: "1.1.0"
+
+      - name: Initialize Terraform
+        id: init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Apply Terraform
+        run: terraform apply -auto-approve
+        working-directory: ./terraform
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          version: 'latest'
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure gsutil to use service account
+        run: |
+          echo ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }} > $HOME/gcp-key.json
+          gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+
+      - name: Deploy to GCS
+        run: |
+          gsutil -m rsync -r ./frontend gs://leaflet-site
+
+      - name: Configure GCS Bucket for Static Website
+        run: |
+          gsutil web set -m index.html -e index.html gs://leaflet-site

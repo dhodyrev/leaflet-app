@@ -44,7 +44,7 @@
             <label for="restricted-areas">Restricted Areas (Lat, Lng):</label>
             <textarea id="restricted-areas" readonly></textarea>
         </div>
-        <input type="text" id="restricted-area-input" placeholder="Enter coordinates as lat,lng">
+        <input type="text" id="restricted-area-input" placeholder="e.g. 51.505, -0.09">
         <button onclick="uploadRestrictedAreas()">Upload Restricted Areas</button>
     </div>
 
@@ -53,6 +53,7 @@
         <div class="form-control">
             <label for="final-path">Final Path:</label>
             <textarea id="final-path" rows="5" cols="50" readonly></textarea>
+            <p id="total-length"></p>
         </div>
     </div>
 
