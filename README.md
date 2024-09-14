@@ -13,7 +13,7 @@ Link https://storage.googleapis.com/leaflet-site/index.html
 - **A* Algorithm**: The A* algorithm calculates the shortest path between the start and end points, considering restricted areas.
 - **Real-time Path Calculation**: The shortest path is calculated and drawn dynamically on the map once the grid and start/end points are set.
 - **Distance Metrics**: The total length of the calculated path is displayed in kilometers or meters.
-- **Predefined Restricted Areas**: Some restricted areas are loaded from a predefined dataset in CSV format.
+- **Predefined Restricted Areas**: Some restricted areas are loaded from a predefined dataset.
 
 ## Project Structure
 
@@ -60,13 +60,13 @@ Link https://storage.googleapis.com/leaflet-site/index.html
 - You can choose from three grid cell sizes: 1 km, 5 km, and 10 km.
 - The grid is recalculated based on the selected size whenever you click "Draw Grid."
 
-### Adding Restricted Areas via CSV
+### Adding Restricted Areas
 - You can add multiple restricted areas by entering coordinates (latitude, longitude) in the "Restricted Area Input" field, separated by a semicolon (`;`).
 - Click "Upload Restricted Areas" to mark these areas on the map as restricted.
 
 ## Predefined Restricted Areas
 
-The project includes predefined restricted areas in CSV format. These are displayed on the map as orange dots, indicating locations that are off-limits for the pathfinding algorithm.
+The project includes predefined restricted areas. These are displayed on the map as orange dots, indicating locations that are off-limits for the pathfinding algorithm.
 
 ## Technology Stack
 

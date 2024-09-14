@@ -1,4 +1,9 @@
-# main.tf
+terraform {
+  backend "gcs" {
+    bucket = "leaflet-terraform-state"
+    prefix = "terraform/state"
+  }
+}
 
 provider "google" {
   project = "leafletapp-435518"
