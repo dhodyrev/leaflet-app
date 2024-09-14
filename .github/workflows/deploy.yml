@@ -29,7 +29,7 @@ jobs:
         working-directory: ./terraform
 
       - name: Apply Terraform
-        run: terraform apply -auto-approve -var="gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" -var="gcp_region=${{ secrets.GCP_REGION }}" -var="gcs_storage_bucket=${{ secrets.GCP_STORAGE_BUCKET }}" -var="gcs_terraform_state_bucket=${{ secrets.GCP_TERRAFORM_STATE_BUCKET }}"
+        run: terraform apply -auto-approve -var="gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" -var="gcp_region=${{ secrets.GCP_REGION }}" -var="gcp_storage_bucket=${{ secrets.GCP_STORAGE_BUCKET }}" -var="gcp_terraform_state_bucket=${{ secrets.GCP_TERRAFORM_STATE_BUCKET }}"
         working-directory: ./terraform
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}

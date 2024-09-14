@@ -13,7 +13,7 @@ variable "gcp_storage_bucket" {
   description = "The name of the GCP bucket used to host the site"
 }
 
-variable "gcs_terraform_state_bucket" {
+variable "gcp_terraform_state_bucket" {
   type        = string
-  description = "The name of the GCS bucket used for Terraform state"
+  description = "The name of the GCP bucket used for Terraform state"
 }
