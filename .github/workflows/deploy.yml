@@ -25,11 +25,11 @@ jobs:
 
       - name: Initialize Terraform
         id: init
-        run: terraform init -backend-config="bucket=leaflet-terraform-state" -backend-config="prefix=terraform/state"
+        run: terraform init -backend-config="bucket=${{ secrets.GCP_TERRAFORM_STATE_BUCKET }}" -backend-config="prefix=terraform/state"
         working-directory: ./terraform
 
       - name: Apply Terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var="gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" -var="gcp_region=${{ secrets.GCP_REGION }}" -var="gcs_storage_bucket=${{ secrets.GCP_STORAGE_BUCKET }}" -var="gcs_terraform_state_bucket=${{ secrets.GCP_TERRAFORM_STATE_BUCKET }}"
         working-directory: ./terraform
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
@@ -43,8 +43,8 @@ jobs:
 
       - name: Deploy to GCS
         run: |
-          gsutil -m rsync -r ./frontend gs://leaflet-site
+          gsutil -m rsync -r ./frontend gs://${{ secrets.GCP_STORAGE_BUCKET }}
 
       - name: Configure GCS Bucket for Static Website
         run: |
-          gsutil web set -m index.html -e index.html gs://leaflet-site
+          gsutil web set -m index.html -e index.html gs://${{ secrets.GCP_STORAGE_BUCKET }}

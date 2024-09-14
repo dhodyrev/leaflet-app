@@ -1,17 +1,17 @@
 terraform {
   backend "gcs" {
-    bucket = "leaflet-terraform-state"
+    bucket = var.gcs_terraform_state_bucket
     prefix = "terraform/state"
   }
 }
 
 provider "google" {
-  project = "leafletapp-435518"
-  region  = "europe-north1"
+  project = var.gcp_project_id
+  region  = var.gcp_region
 }
 
 resource "google_storage_bucket_iam_binding" "public_access" {
-  bucket = "leaflet-site"
+  bucket = var.gcp_storage_bucket
   role   = "roles/storage.objectViewer"
   members = [
     "allUsers",
